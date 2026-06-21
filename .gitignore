@@ -1,0 +1,12 @@
+venv/
+env/
+.env
+__pycache__/
+*.pyc
+best_model.keras
+data/
+experiments/
+hyperparameter_tuning/
+results/
+*.csv
+*.xlsx
