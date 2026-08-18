@@ -3,8 +3,6 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 import matplotlib.pyplot as plt
-from keras_tuner import Hyperband
-import optuna
 from sklearn.metrics import confusion_matrix, classification_report
 
 from .base import BaseModel

@@ -14,7 +14,15 @@ from ..models.sklearn_classifier import SklearnClassifier
 from .base_pipeline import BasePipeline
 
 class DirectPipeline(BasePipeline):
-    """Pipeline for training directly on preprocessed data"""
+    """Pipeline for training directly on a previously-extracted feature CSV.
+
+    Note: the CSV has no subject/user_id column, so this path cannot do the
+    subject-independent split that UCIPipeline uses (see base_pipeline.BasePipeline).
+    It falls back to a random stratified split, which is only safe here because this
+    pipeline also does no resampling (no BorderlineSMOTE/ENN), so it doesn't carry the
+    resample-before-split leakage risk UCIPipeline had - but overlapping windows from
+    the same subject can still land on both sides of the split.
+    """
     
     def __init__(self, config_path: str, preprocessed_file: str):
         self.config_path = config_path

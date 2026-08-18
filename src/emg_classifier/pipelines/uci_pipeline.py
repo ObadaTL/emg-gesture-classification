@@ -163,12 +163,12 @@ class UCIPipeline(BasePipeline):
         
         # Extract features
         print("Step 2: Extracting features...")
-        features = self.feature_extractor.extract_features(processed_data)
-        
+        features, groups, session_ids, window_starts = self.feature_extractor.extract_features(processed_data)
+
         # Split data
         print("Step 3: Splitting data...")
-        X_train, X_test, y_train, y_test = self._prepare_data(features)
-        
+        X_train, X_test, y_train, y_test = self._prepare_data(features, groups, session_ids, window_starts)
+
         # Perform hyperparameter tuning (only for TensorFlow model)
         if isinstance(self.model, TensorflowClassifier):
             print("Step 4: Performing hyperparameter tuning...")
