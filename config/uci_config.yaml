@@ -67,6 +67,16 @@ paths:
   results: "results"
 
 processing:
-  n_jobs: 10  # Use all available CPU cores (-1) or specify a number 
+  n_jobs: 10  # Use all available CPU cores (-1) or specify a number
   use_lda: false  # Set to true to enable LDA dimensionality reduction
   lda_components: 4  # Number of LDA components (should be <= num_classes-1)
+  # Evaluation protocol - see BasePipeline._prepare_data docstring:
+  #   subject_independent: held-out subjects are entirely unseen (harder, tests
+  #     generalization to a brand-new person with no calibration)
+  #   block_holdout: same subjects in train/test, held out by whole recording
+  #     session. In this dataset each subject's 2 sessions are their left/right
+  #     arm, so this tests cross-arm transfer, not "same setup, later session".
+  #   intra_session: same recording session split by time, sensor placement held
+  #     fixed - closest match to the reference paper's own train/test-session
+  #     protocol (repeated sessions with a stable setup).
+  split_strategy: subject_independent

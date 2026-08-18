@@ -1,11 +1,17 @@
 import argparse
+import sys
 from pathlib import Path
 import yaml
 from datetime import datetime
 import json
 from typing import List, Dict, Any, Tuple
 import tensorflow as tf
-from src.pipelines.uci_pipeline import UCIPipeline
+
+# Allow running this script directly (`python scripts/run_experiment.py`) without
+# requiring `pip install -e .` first, by putting src/ on the import path.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
+from emg_classifier.pipelines.uci_pipeline import UCIPipeline
 
 def load_config(config_path: str) -> dict:
     """Load configuration from YAML file"""
@@ -202,7 +208,8 @@ def main():
             else:
                 metrics = pipeline.run_experiment(exp_name)
             
-            # Prepare results dictionary
+            # Prepare results dictionary. Keep this key set identical to the failure
+            # branch below so every row in the CSV has the same columns.
             results = {
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 'experiment_name': exp_name,
@@ -211,13 +218,15 @@ def main():
                 'increment_dim': exp_config['increment_dim'],
                 'feature_dim': exp_config['feature_dim'],
                 'model_type': exp_config['model']['type'],
+                'split_strategy': exp_config.get('processing', {}).get('split_strategy', 'subject_independent'),
                 'accuracy': metrics.get('accuracy', None),
                 'f1_score': metrics.get('f1_score', None),
                 'precision': metrics.get('precision', None),
                 'recall': metrics.get('recall', None),
                 'training_time': metrics.get('training_time', None),
                 'inference_time': metrics.get('inference_time', None),
-                'status': 'completed'
+                'status': 'completed',
+                'error': None,
             }
             
             # Update results CSV
@@ -239,7 +248,7 @@ def main():
             with open(log_file, 'a') as f:
                 f.write(f"Experiment failed: {str(e)}\n")
             
-            # Record failed experiment
+            # Record failed experiment (same key set as the success branch above)
             results = {
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 'experiment_name': exp_name,
@@ -248,8 +257,15 @@ def main():
                 'increment_dim': exp_config.get('increment_dim'),
                 'feature_dim': exp_config.get('feature_dim'),
                 'model_type': exp_config.get('model', {}).get('type'),
+                'split_strategy': exp_config.get('processing', {}).get('split_strategy', 'subject_independent'),
+                'accuracy': None,
+                'f1_score': None,
+                'precision': None,
+                'recall': None,
+                'training_time': None,
+                'inference_time': None,
                 'status': 'failed',
-                'error': str(e)
+                'error': str(e),
             }
             update_results_csv(results_path, results)
     

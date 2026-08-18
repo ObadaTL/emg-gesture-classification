@@ -77,30 +77,35 @@ class UCIDataLoader(BaseDataLoader):
     def _process_single_file(self, file_path: str, user_id: str) -> pd.DataFrame:
         """Process a single UCI data file with EMG-specific validation"""
         columns = ['time'] + [f'channel{i}' for i in range(1, 9)] + ['class']
-        
+        # Each user contributes multiple recording files (sessions); the raw signal
+        # is not contiguous across files, so downstream windowing must never slide
+        # across a session boundary. session_id captures that boundary per-file.
+        session_id = f"{user_id}_{Path(file_path).stem}"
+
         try:
-            data = pd.read_csv(file_path, 
+            data = pd.read_csv(file_path,
                              delimiter='\t',
                              names=columns,
                              skiprows=1)
-            
+
             invalid_labels = set(data['class'].unique()) - set(self.GESTURE_LABELS.keys())
             if invalid_labels:
                 print(f"Warning: Invalid gesture labels found in {file_path}: {invalid_labels}")
                 data = data[data['class'].isin(self.GESTURE_LABELS.keys())]
-            
+
             # Handle missing or infinite values
             if data['class'].isnull().any() or np.isinf(data['class']).any():
                 data['class'].fillna(0, inplace=True)
                 data.loc[np.isinf(data['class']), 'class'] = 0
-            
+
             data['class'] = data['class'].astype(int)
             data['user_id'] = user_id
-            
+            data['session_id'] = session_id
+
         except Exception as e:
             print(f"Error processing file {file_path}: {str(e)}")
-            return pd.DataFrame(columns=columns + ['user_id'])
-        
+            return pd.DataFrame(columns=columns + ['user_id', 'session_id'])
+
         return data
     
     def preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:

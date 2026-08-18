@@ -3,7 +3,11 @@ env/
 .env
 __pycache__/
 *.pyc
+.pytest_cache/
+*.egg-info/
 best_model.keras
+*.keras
+*.png
 data/
 experiments/
 hyperparameter_tuning/
